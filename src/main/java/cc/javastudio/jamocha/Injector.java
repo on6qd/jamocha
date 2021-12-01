@@ -67,17 +67,16 @@ public class Injector {
      */
     private void initFramework(Class<?> mainClass)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
-        Class<?>[] classes = getClasses(mainClass.getPackage().getName(), true);
-        ComponentContainer componentConatiner = ComponentContainer.getInstance();
-        ClassHunter classHunter = componentConatiner.getClassHunter();
         String packageRelPath = mainClass.getPackage().getName().replace(".", "/");
-        try (ClassHunter.SearchResult result = classHunter.findBy(
-                SearchConfig.forResources(
-                        packageRelPath
-                ).by(ClassCriteria.create().allThoseThatMatch(cls -> {
-                    return cls.getAnnotation(Component.class) != null;
-                }))
-        )) {
+        SearchConfig searchConfig = SearchConfig
+                .forResources(packageRelPath)
+                .by(ClassCriteria.create().allThoseThatMatch(
+                        clazz -> clazz.getAnnotation(Component.class) != null
+                ));
+
+        ComponentContainer componentContainer = ComponentContainer.getInstance();
+        ClassHunter classHunter = componentContainer.getClassHunter();
+        try (ClassHunter.SearchResult result = classHunter.findBy(searchConfig)) {
             Collection<Class<?>> types = result.getClasses();
             for (Class<?> implementationClass : types) {
                 Class<?>[] interfaces = implementationClass.getInterfaces();
@@ -90,6 +89,7 @@ public class Injector {
                 }
             }
 
+            Class<?>[] classes = getClasses(mainClass.getPackage().getName(), true);
             for (Class<?> classz : classes) {
                 if (classz.isAnnotationPresent(Component.class)) {
                     Object classInstance = classz.newInstance();
