@@ -39,7 +39,7 @@ public class Injector {
     /**
      * Start application
      *
-     * @param mainClass
+     * @param mainClass - class containing the main method
      */
     public static void startApplication(Class<?> mainClass) {
         try {
@@ -98,14 +98,14 @@ public class Injector {
                     InjectionUtil.autowire(this, aClass, classInstance);
                 }
             }
-        };
+        }
 
     }
 
     /**
      * Get all the classes for the input package
      */
-    public Class<?>[] getClasses(String packageName, boolean recursive) throws ClassNotFoundException, IOException {
+    public Class<?>[] getClasses(String packageName, boolean recursive) {
         ComponentContainer componentContainer = ComponentContainer.getInstance();
         ClassHunter classHunter = componentContainer.getClassHunter();
         String packageRelPath = packageName.replace(".", "/");
