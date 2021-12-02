@@ -3,6 +3,7 @@ package cc.javastudio.jamocha;
 
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,9 +54,9 @@ public class Injector {
         }
     }
 
-    public static <T> T getService(Class<T> classz) {
+    public static <T> T getService(Class<T> aClass) {
         try {
-            return injector.getBeanInstance(classz);
+            return injector.getBeanInstance(aClass);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -66,7 +67,7 @@ public class Injector {
      * initialize the injector framework
      */
     private void initFramework(Class<?> mainClass)
-            throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException {
+            throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, NoSuchMethodException, InvocationTargetException {
         String packageRelPath = mainClass.getPackage().getName().replace(".", "/");
         SearchConfig searchConfig = SearchConfig
                 .forResources(packageRelPath)
@@ -90,11 +91,11 @@ public class Injector {
             }
 
             Class<?>[] classes = getClasses(mainClass.getPackage().getName(), true);
-            for (Class<?> classz : classes) {
-                if (classz.isAnnotationPresent(Component.class)) {
-                    Object classInstance = classz.newInstance();
-                    applicationScope.put(classz, classInstance);
-                    InjectionUtil.autowire(this, classz, classInstance);
+            for (Class<?> aClass : classes) {
+                if (aClass.isAnnotationPresent(Component.class)) {
+                    Object classInstance = aClass.getDeclaredConstructor().newInstance();
+                    applicationScope.put(aClass, classInstance);
+                    InjectionUtil.autowire(this, aClass, classInstance);
                 }
             }
         };
@@ -105,8 +106,8 @@ public class Injector {
      * Get all the classes for the input package
      */
     public Class<?>[] getClasses(String packageName, boolean recursive) throws ClassNotFoundException, IOException {
-        ComponentContainer componentConatiner = ComponentContainer.getInstance();
-        ClassHunter classHunter = componentConatiner.getClassHunter();
+        ComponentContainer componentContainer = ComponentContainer.getInstance();
+        ClassHunter classHunter = componentContainer.getClassHunter();
         String packageRelPath = packageName.replace(".", "/");
         SearchConfig config = SearchConfig.forResources(
                 packageRelPath
