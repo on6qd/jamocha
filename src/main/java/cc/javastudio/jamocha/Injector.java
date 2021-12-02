@@ -153,14 +153,12 @@ public class Injector {
         Set<Entry<Class<?>, Class<?>>> implementationClasses = diMap.entrySet().stream()
                 .filter(entry -> entry.getValue() == interfaceClass).collect(Collectors.toSet());
         String errorMessage = "";
-        if (implementationClasses == null || implementationClasses.size() == 0) {
+        if (implementationClasses.size() == 0) {
             errorMessage = "no implementation found for interface " + interfaceClass.getName();
         } else if (implementationClasses.size() == 1) {
             Optional<Entry<Class<?>, Class<?>>> optional = implementationClasses.stream().findFirst();
-            if (optional.isPresent()) {
-                return optional.get().getKey();
-            }
-        } else if (implementationClasses.size() > 1) {
+            return optional.get().getKey();
+        } else {
             final String findBy = (qualifier == null || qualifier.trim().length() == 0) ? fieldName : qualifier;
             Optional<Entry<Class<?>, Class<?>>> optional = implementationClasses.stream()
                     .filter(entry -> entry.getKey().getSimpleName().equalsIgnoreCase(findBy)).findAny();
