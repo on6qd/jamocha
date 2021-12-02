@@ -67,7 +67,7 @@ public class Injector {
      * initialize the injector framework
      */
     private void initFramework(Class<?> mainClass)
-            throws InstantiationException, IllegalAccessException, ClassNotFoundException, IOException, NoSuchMethodException, InvocationTargetException {
+            throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         String packageRelPath = mainClass.getPackage().getName().replace(".", "/");
         SearchConfig searchConfig = SearchConfig
                 .forResources(packageRelPath)
