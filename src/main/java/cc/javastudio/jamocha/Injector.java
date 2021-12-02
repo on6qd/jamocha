@@ -75,8 +75,8 @@ public class Injector {
         ComponentContainer componentContainer = ComponentContainer.getInstance();
         ClassHunter classHunter = componentContainer.getClassHunter();
         try (ClassHunter.SearchResult result = classHunter.findBy(searchConfig)) {
-            Collection<Class<?>> types = result.getClasses();
-            for (Class<?> implementationClass : types) {
+            Collection<Class<?>> classes = result.getClasses();
+            for (Class<?> implementationClass : classes) {
                 Class<?>[] interfaces = implementationClass.getInterfaces();
                 if (interfaces.length == 0) {
                     diMap.put(implementationClass, implementationClass);
@@ -86,8 +86,6 @@ public class Injector {
                     }
                 }
             }
-
-            Collection<Class<?>>classes = getClasses(mainClass.getPackage().getName(), true);
             for (Class<?> aClass : classes) {
                 if (aClass.isAnnotationPresent(Component.class)) {
                     Object classInstance = aClass.getDeclaredConstructor().newInstance();
@@ -96,34 +94,12 @@ public class Injector {
                 }
             }
         }
-
     }
-
-    /**
-     * Get all the classes for the input package
-     */
-    public Collection<Class<?>> getClasses(String packageName, boolean recursive) {
-        ComponentContainer componentContainer = ComponentContainer.getInstance();
-        ClassHunter classHunter = componentContainer.getClassHunter();
-        String packageRelPath = packageName.replace(".", "/");
-        SearchConfig config = SearchConfig.forResources(
-                packageRelPath
-        );
-        if (!recursive) {
-            config.findInChildren();
-        }
-
-        try (ClassHunter.SearchResult result = classHunter.findBy(config)) {
-            return result.getClasses();
-        }
-    }
-
 
     /**
      * Create and Get the Object instance of the implementation class for input
      * interface service
      */
-    @SuppressWarnings("unchecked")
     private <T> T getBeanInstance(Class<T> interfaceClass) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         return (T) getBeanInstance(interfaceClass, null, null);
     }
