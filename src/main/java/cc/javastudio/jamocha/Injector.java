@@ -25,8 +25,8 @@ import org.burningwave.core.classes.SearchConfig;
  * all dependencies
  */
 public class Injector {
-    private Map<Class<?>, Class<?>> diMap;
-    private Map<Class<?>, Object> applicationScope;
+    private final Map<Class<?>, Class<?>> diMap;
+    private final Map<Class<?>, Object> applicationScope;
 
     private static Injector injector;
 
@@ -84,8 +84,8 @@ public class Injector {
                 if (interfaces.length == 0) {
                     diMap.put(implementationClass, implementationClass);
                 } else {
-                    for (Class<?> iface : interfaces) {
-                        diMap.put(implementationClass, iface);
+                    for (Class<?> anInterface : interfaces) {
+                        diMap.put(implementationClass, anInterface);
                     }
                 }
             }
