@@ -1,8 +1,5 @@
 package cc.javastudio.jamocha;
 
-
-
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -90,7 +87,7 @@ public class Injector {
                 }
             }
 
-            Class<?>[] classes = getClasses(mainClass.getPackage().getName(), true);
+            Collection<Class<?>>classes = getClasses(mainClass.getPackage().getName(), true);
             for (Class<?> aClass : classes) {
                 if (aClass.isAnnotationPresent(Component.class)) {
                     Object classInstance = aClass.getDeclaredConstructor().newInstance();
@@ -105,7 +102,7 @@ public class Injector {
     /**
      * Get all the classes for the input package
      */
-    public Class<?>[] getClasses(String packageName, boolean recursive) {
+    public Collection<Class<?>> getClasses(String packageName, boolean recursive) {
         ComponentContainer componentContainer = ComponentContainer.getInstance();
         ClassHunter classHunter = componentContainer.getClassHunter();
         String packageRelPath = packageName.replace(".", "/");
@@ -117,8 +114,7 @@ public class Injector {
         }
 
         try (ClassHunter.SearchResult result = classHunter.findBy(config)) {
-            Collection<Class<?>> classes = result.getClasses();
-            return classes.toArray(new Class[classes.size()]);
+            return result.getClasses();
         }
     }
 
