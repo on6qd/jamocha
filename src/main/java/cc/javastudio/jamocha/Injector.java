@@ -128,7 +128,7 @@ public class Injector {
      * interface service
      */
     @SuppressWarnings("unchecked")
-    private <T> T getBeanInstance(Class<T> interfaceClass) throws InstantiationException, IllegalAccessException {
+    private <T> T getBeanInstance(Class<T> interfaceClass) throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         return (T) getBeanInstance(interfaceClass, null, null);
     }
 
@@ -136,7 +136,7 @@ public class Injector {
      * Overload getBeanInstance to handle qualifier and autowire by type
      */
     public <T> Object getBeanInstance(Class<T> interfaceClass, String fieldName, String qualifier)
-            throws InstantiationException, IllegalAccessException {
+            throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         Class<?> implementationClass = getImplimentationClass(interfaceClass, fieldName, qualifier);
 
         if (applicationScope.containsKey(implementationClass)) {
@@ -144,7 +144,7 @@ public class Injector {
         }
 
         synchronized (applicationScope) {
-            Object service = implementationClass.newInstance();
+            Object service = implementationClass.getDeclaredConstructor().newInstance();
             applicationScope.put(implementationClass, service);
             return service;
         }
