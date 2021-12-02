@@ -137,7 +137,7 @@ public class Injector {
      */
     public <T> Object getBeanInstance(Class<T> interfaceClass, String fieldName, String qualifier)
             throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        Class<?> implementationClass = getImplimentationClass(interfaceClass, fieldName, qualifier);
+        Class<?> implementationClass = getImplementationClass(interfaceClass, fieldName, qualifier);
 
         if (applicationScope.containsKey(implementationClass)) {
             return applicationScope.get(implementationClass);
@@ -151,9 +151,9 @@ public class Injector {
     }
 
     /**
-     * Get the name of the implimentation class for input interface service
+     * Get the name of the implementation class for input interface service
      */
-    private Class<?> getImplimentationClass(Class<?> interfaceClass, final String fieldName, final String qualifier) {
+    private Class<?> getImplementationClass(Class<?> interfaceClass, final String fieldName, final String qualifier) {
         Set<Entry<Class<?>, Class<?>>> implementationClasses = diMap.entrySet().stream()
                 .filter(entry -> entry.getValue() == interfaceClass).collect(Collectors.toSet());
         String errorMessage = "";
