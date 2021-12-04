@@ -98,13 +98,13 @@ public class Injector {
     /**
      * Perform injection recursively, for each service inside the Client class
      */
-    public Object autowire(Class<?> classz)
+    public Object autowire(Class<?> aClass)
             throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
         ConstructorCriteria constructorCriteria = ConstructorCriteria
                 .withoutConsideringParentClasses()
                 .allThoseThatMatch(constructor -> constructor.getParameterCount() > 0);
 
-        var constructors = Constructors.findAllAndMakeThemAccessible(constructorCriteria, classz);
+        var constructors = Constructors.findAllAndMakeThemAccessible(constructorCriteria, aClass);
 
         Object newBean = null;
         if (constructors.size() > 0) {
@@ -117,7 +117,7 @@ public class Injector {
                 newBean = constructor.newInstance(dependencies.toArray());
             }
         } else {
-            newBean = classz.getDeclaredConstructor().newInstance();
+            newBean = aClass.getDeclaredConstructor().newInstance();
         }
         return newBean;
     }
