@@ -140,7 +140,6 @@ public class Injector {
         if (applicationScope.containsKey(implementationClass)) {
             return applicationScope.get(implementationClass);
         }
-
         synchronized (applicationScope) {
             Object newBean = autowire(implementationClass);
             applicationScope.put(implementationClass, newBean);
