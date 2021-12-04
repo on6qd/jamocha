@@ -12,6 +12,15 @@ public class UserAccountClientComponent {
     @Autowired
     private AccountService accountService;
 
+    public UserAccountClientComponent() {}
+
+    public UserAccountClientComponent(UserService userService, AccountService accountService) {
+        this.userService = userService;
+        this.accountService = accountService;
+    }
+
+
+
     public void displayUserAccount(){
         String userName = userService.getUserName();
         Long accountNumber = accountService.getAccountNumber(userName);

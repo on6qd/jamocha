@@ -1,12 +1,8 @@
 package cc.javastudio.jamocha;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.management.RuntimeErrorException;
@@ -14,7 +10,10 @@ import javax.management.RuntimeErrorException;
 import org.burningwave.core.assembler.ComponentContainer;
 import org.burningwave.core.classes.ClassCriteria;
 import org.burningwave.core.classes.ClassHunter;
+import org.burningwave.core.classes.ConstructorCriteria;
 import org.burningwave.core.classes.SearchConfig;
+
+import static org.burningwave.core.assembler.StaticComponentContainer.Constructors;
 
 
 /**
@@ -51,7 +50,7 @@ public class Injector {
         }
     }
 
-    public static <T> T getService(Class<T> aClass) {
+    public static <T> T getBean(Class<T> aClass) {
         try {
             return injector.getBeanInstance(aClass);
         } catch (Exception e) {
@@ -73,6 +72,7 @@ public class Injector {
                 ));
 
         ComponentContainer componentContainer = ComponentContainer.getInstance();
+        ComponentContainer.create("org/burningwave/custom-config-file.properties");
         ClassHunter classHunter = componentContainer.getClassHunter();
         try (ClassHunter.SearchResult result = classHunter.findBy(searchConfig)) {
             Collection<Class<?>> classes = result.getClasses();
@@ -88,12 +88,41 @@ public class Injector {
             }
             for (Class<?> aClass : classes) {
                 if (aClass.isAnnotationPresent(Component.class)) {
-                    Object classInstance = aClass.getDeclaredConstructor().newInstance();
-                    applicationScope.put(aClass, classInstance);
-                    InjectionUtil.autowire(this, aClass, classInstance);
+                    Object newBean = autowire(aClass);
+                    applicationScope.put(aClass,newBean);
                 }
+
             }
         }
+    }
+
+    /**
+     * Perform injection recursively, for each service inside the Client class
+     */
+    public Object autowire(Class<?> classz)
+            throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
+        ConstructorCriteria constructorCriteria = ConstructorCriteria
+                .withoutConsideringParentClasses()
+                .allThoseThatMatch(constructor -> constructor.getParameterCount() > 0);
+
+        var constructors = Constructors.findAllAndMakeThemAccessible(constructorCriteria, classz);
+
+        Object newBean = null;
+        if (constructors.size() > 0) {
+            for (var constructor : constructors) {
+                List<Object> dependencies = new ArrayList<>();
+                for (var parameter : constructor.getParameterTypes()) {
+                    Object anInstance = getBeanInstance(parameter, parameter.getName(), null);
+                    if (anInstance != null) {
+                        dependencies.add(anInstance);
+                    }
+                }
+                newBean = constructor.newInstance(dependencies.toArray());
+            }
+        } else {
+            newBean = classz.getDeclaredConstructor().newInstance();
+        }
+        return newBean;
     }
 
     /**

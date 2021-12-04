@@ -7,7 +7,7 @@ public class UserAccountApplication {
     public static void main(String[] args) {
         long startTime = System.currentTimeMillis();
         Injector.startApplication(UserAccountApplication.class);
-        Injector.getService(UserAccountClientComponent.class).displayUserAccount();
+        Injector.getBean(UserAccountClientComponent.class).displayUserAccount();
         long endTime = System.currentTimeMillis();
         System.out.println("\tElapsed time: " + getFormattedDifferenceOfMillis(endTime, startTime) + " seconds\n");
     }
