@@ -91,7 +91,6 @@ public class Injector {
                     Object newBean = autowire(aClass);
                     applicationScope.put(aClass,newBean);
                 }
-
             }
         }
     }
@@ -113,9 +112,7 @@ public class Injector {
                 List<Object> dependencies = new ArrayList<>();
                 for (var parameter : constructor.getParameterTypes()) {
                     Object anInstance = getBeanInstance(parameter, parameter.getName(), null);
-                    if (anInstance != null) {
-                        dependencies.add(anInstance);
-                    }
+                    dependencies.add(anInstance);
                 }
                 newBean = constructor.newInstance(dependencies.toArray());
             }
@@ -145,9 +142,9 @@ public class Injector {
         }
 
         synchronized (applicationScope) {
-            Object service = implementationClass.getDeclaredConstructor().newInstance();
-            applicationScope.put(implementationClass, service);
-            return service;
+            Object newBean = autowire(implementationClass);
+            applicationScope.put(implementationClass, newBean);
+            return newBean;
         }
     }
 
