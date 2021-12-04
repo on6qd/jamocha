@@ -23,7 +23,6 @@ public class Injector {
     private static Injector injector;
 
     private Injector() {
-        super();
         diMap = new HashMap<>();
         applicationScope = new HashMap<>();
     }
@@ -87,7 +86,7 @@ public class Injector {
     /**
      * Perform injection recursively, for each service inside the Client class
      */
-    public Object autowire(Class<?> aClass)
+    private Object autowire(Class<?> aClass)
             throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
 
         var constructors = get(Constructors.of(aClass));
@@ -136,11 +135,11 @@ public class Injector {
         if (applicationScope.containsKey(implementationClass)) {
             return applicationScope.get(implementationClass);
         }
-        synchronized (applicationScope) {
-            Object newBean = autowire(implementationClass);
-            applicationScope.put(implementationClass, newBean);
-            return newBean;
-        }
+
+        Object newBean = autowire(implementationClass);
+        applicationScope.put(implementationClass, newBean);
+        return newBean;
+
     }
 
     /**

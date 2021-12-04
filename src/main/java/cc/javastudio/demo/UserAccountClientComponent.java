@@ -1,6 +1,5 @@
 package cc.javastudio.demo;
 
-import cc.javastudio.jamocha.Autowired;
 import cc.javastudio.jamocha.Component;
 import cc.javastudio.jamocha.Qualifier;
 
