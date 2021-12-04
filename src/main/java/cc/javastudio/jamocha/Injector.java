@@ -1,12 +1,15 @@
 package cc.javastudio.jamocha;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import javax.management.RuntimeErrorException;
 import org.reflections.Reflections;
+import org.reflections.util.ConfigurationBuilder;
+
 import static org.reflections.ReflectionUtils.*;
+import static org.reflections.scanners.Scanners.MethodsParameter;
 import static org.reflections.scanners.Scanners.TypesAnnotated;
 
 /**
@@ -58,10 +61,13 @@ public class Injector {
     private void initFramework(Class<?> mainClass)
             throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
         var startPackage = mainClass.getPackage().getName();
-        Reflections reflections = new Reflections(startPackage);
-        Set<Class<?>> classes = reflections.get(TypesAnnotated.with(Component.class).asClass());
-        for (Class<?> implementationClass : classes) {
-            Class<?>[] interfaces = implementationClass.getInterfaces();
+        var reflections = new Reflections(
+                new ConfigurationBuilder()
+                        .forPackage(startPackage)
+                        .setScanners(TypesAnnotated, MethodsParameter));
+        var classes = reflections.get(TypesAnnotated.with(Component.class).asClass());
+        for (var implementationClass : classes) {
+            var interfaces = implementationClass.getInterfaces();
             if (interfaces.length == 0) {
                 diMap.put(implementationClass, implementationClass);
             } else {
@@ -70,13 +76,12 @@ public class Injector {
                 }
             }
         }
-        for (Class<?> aClass : classes) {
+        for (var aClass : classes) {
             if (aClass.isAnnotationPresent(Component.class)) {
                 Object newBean = autowire(aClass);
                 applicationScope.put(aClass, newBean);
             }
         }
-
     }
 
     /**
@@ -87,17 +92,30 @@ public class Injector {
 
         var constructors = get(Constructors.of(aClass));
         var constructor = constructors.stream().findFirst().get();
-
         if (constructor.getParameterCount() > 0) {
-            List<Object> dependencies = new ArrayList<>();
-            for (var parameter : constructor.getParameterTypes()) {
-                Object anInstance = getBeanInstance(parameter, parameter.getName(), null);
+            var dependencies = new ArrayList<>();
+            var annotations = constructor.getParameterAnnotations();
+            var parameters = constructor.getParameterTypes();
+            for (int i = 0; i< parameters.length; i++) {
+                var parameter = parameters[i];
+                var qualifier = hasQualifier(annotations[i]);
+                Object anInstance = getBeanInstance(parameter, parameter.getName(), qualifier);
                 dependencies.add(anInstance);
             }
             return constructor.newInstance(dependencies.toArray());
         } else {
             return aClass.getDeclaredConstructor().newInstance();
         }
+    }
+
+    private static String hasQualifier(Annotation[] annotations) {
+        for (var annotation : annotations) {
+            if(Qualifier.class.isInstance(annotation)) {
+                var argumentAnnotation = (Qualifier) annotation;
+                return argumentAnnotation.value();
+            }
+        }
+        return null;
     }
 
     /**
@@ -113,7 +131,7 @@ public class Injector {
      */
     public <T> Object getBeanInstance(Class<T> interfaceClass, String fieldName, String qualifier)
             throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        Class<?> implementationClass = getImplementationClass(interfaceClass, fieldName, qualifier);
+        var implementationClass = getImplementationClass(interfaceClass, fieldName, qualifier);
 
         if (applicationScope.containsKey(implementationClass)) {
             return applicationScope.get(implementationClass);
@@ -129,17 +147,17 @@ public class Injector {
      * Get the name of the implementation class for input interface service
      */
     private Class<?> getImplementationClass(Class<?> interfaceClass, final String fieldName, final String qualifier) {
-        Set<Entry<Class<?>, Class<?>>> implementationClasses = diMap.entrySet().stream()
+        var implementationClasses = diMap.entrySet().stream()
                 .filter(entry -> entry.getValue() == interfaceClass).collect(Collectors.toSet());
-        String errorMessage = "";
+        var errorMessage = "";
         if (implementationClasses.size() == 0) {
             errorMessage = "no implementation found for interface " + interfaceClass.getName();
         } else if (implementationClasses.size() == 1) {
-            Optional<Entry<Class<?>, Class<?>>> optional = implementationClasses.stream().findFirst();
+            var optional = implementationClasses.stream().findFirst();
             return optional.get().getKey();
         } else {
             final String findBy = (qualifier == null || qualifier.trim().length() == 0) ? fieldName : qualifier;
-            Optional<Entry<Class<?>, Class<?>>> optional = implementationClasses.stream()
+            var optional = implementationClasses.stream()
                     .filter(entry -> entry.getKey().getSimpleName().equalsIgnoreCase(findBy)).findAny();
             if (optional.isPresent()) {
                 return optional.get().getKey();

@@ -1,11 +1,12 @@
 package cc.javastudio.demo;
 
 import cc.javastudio.jamocha.Component;
+import cc.javastudio.jamocha.Qualifier;
 
 @Component
-public class AccountServiceImpl implements AccountService{
+public class AccountServiceImpl2 implements AccountService{
     @Override
     public Long getAccountNumber(String userName) {
-        return 123456789L;
+        return 987654321L;
     }
 }

@@ -2,6 +2,7 @@ package cc.javastudio.demo;
 
 import cc.javastudio.jamocha.Autowired;
 import cc.javastudio.jamocha.Component;
+import cc.javastudio.jamocha.Qualifier;
 
 @Component
 public class UserAccountClientComponent {
@@ -9,7 +10,7 @@ public class UserAccountClientComponent {
     private UserService userService;
     private AccountService accountService;
 
-    public UserAccountClientComponent(UserService userService, AccountService accountService) {
+    public UserAccountClientComponent(UserService userService, @Qualifier("AccountServiceImpl2") AccountService accountService) {
         this.userService = userService;
         this.accountService = accountService;
     }
