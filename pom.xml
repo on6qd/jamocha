@@ -16,9 +16,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.burningwave</groupId>
-            <artifactId>core</artifactId>
-            <version>12.29.3</version>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.10.2</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

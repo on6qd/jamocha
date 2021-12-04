@@ -4,17 +4,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
-
 import javax.management.RuntimeErrorException;
-
-import org.burningwave.core.assembler.ComponentContainer;
-import org.burningwave.core.classes.ClassCriteria;
-import org.burningwave.core.classes.ClassHunter;
-import org.burningwave.core.classes.ConstructorCriteria;
-import org.burningwave.core.classes.SearchConfig;
-
-import static org.burningwave.core.assembler.StaticComponentContainer.Constructors;
-
+import org.reflections.Reflections;
+import static org.reflections.ReflectionUtils.*;
+import static org.reflections.scanners.Scanners.TypesAnnotated;
 
 /**
  * Injector, to create objects for all @CustomService classes. autowire/inject
@@ -64,35 +57,26 @@ public class Injector {
      */
     private void initFramework(Class<?> mainClass)
             throws InstantiationException, IllegalAccessException, NoSuchMethodException, InvocationTargetException {
-        String packageRelPath = mainClass.getPackage().getName().replace(".", "/");
-        SearchConfig searchConfig = SearchConfig
-                .forResources(packageRelPath)
-                .by(ClassCriteria.create().allThoseThatMatch(
-                        clazz -> clazz.getAnnotation(Component.class) != null
-                ));
-
-        ComponentContainer componentContainer = ComponentContainer.getInstance();
-        ComponentContainer.create("org/burningwave/custom-config-file.properties");
-        ClassHunter classHunter = componentContainer.getClassHunter();
-        try (ClassHunter.SearchResult result = classHunter.findBy(searchConfig)) {
-            Collection<Class<?>> classes = result.getClasses();
-            for (Class<?> implementationClass : classes) {
-                Class<?>[] interfaces = implementationClass.getInterfaces();
-                if (interfaces.length == 0) {
-                    diMap.put(implementationClass, implementationClass);
-                } else {
-                    for (Class<?> anInterface : interfaces) {
-                        diMap.put(implementationClass, anInterface);
-                    }
-                }
-            }
-            for (Class<?> aClass : classes) {
-                if (aClass.isAnnotationPresent(Component.class)) {
-                    Object newBean = autowire(aClass);
-                    applicationScope.put(aClass,newBean);
+        var startPackage = mainClass.getPackage().getName();
+        Reflections reflections = new Reflections(startPackage);
+        Set<Class<?>> classes = reflections.get(TypesAnnotated.with(Component.class).asClass());
+        for (Class<?> implementationClass : classes) {
+            Class<?>[] interfaces = implementationClass.getInterfaces();
+            if (interfaces.length == 0) {
+                diMap.put(implementationClass, implementationClass);
+            } else {
+                for (Class<?> anInterface : interfaces) {
+                    diMap.put(implementationClass, anInterface);
                 }
             }
         }
+        for (Class<?> aClass : classes) {
+            if (aClass.isAnnotationPresent(Component.class)) {
+                Object newBean = autowire(aClass);
+                applicationScope.put(aClass, newBean);
+            }
+        }
+
     }
 
     /**
@@ -100,26 +84,20 @@ public class Injector {
      */
     public Object autowire(Class<?> aClass)
             throws InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException {
-        ConstructorCriteria constructorCriteria = ConstructorCriteria
-                .withoutConsideringParentClasses()
-                .allThoseThatMatch(constructor -> constructor.getParameterCount() > 0);
 
-        var constructors = Constructors.findAllAndMakeThemAccessible(constructorCriteria, aClass);
+        var constructors = get(Constructors.of(aClass));
+        var constructor = constructors.stream().findFirst().get();
 
-        Object newBean = null;
-        if (constructors.size() > 0) {
-            for (var constructor : constructors) {
-                List<Object> dependencies = new ArrayList<>();
-                for (var parameter : constructor.getParameterTypes()) {
-                    Object anInstance = getBeanInstance(parameter, parameter.getName(), null);
-                    dependencies.add(anInstance);
-                }
-                newBean = constructor.newInstance(dependencies.toArray());
+        if (constructor.getParameterCount() > 0) {
+            List<Object> dependencies = new ArrayList<>();
+            for (var parameter : constructor.getParameterTypes()) {
+                Object anInstance = getBeanInstance(parameter, parameter.getName(), null);
+                dependencies.add(anInstance);
             }
+            return constructor.newInstance(dependencies.toArray());
         } else {
-            newBean = aClass.getDeclaredConstructor().newInstance();
+            return aClass.getDeclaredConstructor().newInstance();
         }
-        return newBean;
     }
 
     /**
